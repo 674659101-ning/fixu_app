@@ -11,7 +11,7 @@ class FixUApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'FixU - แอปแจ้งซ่อมในมหาวิทยาลัย',
+      title: 'FixU - แอปแจ้งซ่อมในมหาวิทยาลัย ',
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
         primaryColor: const Color(0xFF0066FF),
