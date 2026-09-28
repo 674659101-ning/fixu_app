@@ -45,5 +45,9 @@
 	<true/>
 	<key>UIApplicationSupportsIndirectInputEvents</key>
 	<true/>
+	<key>NSCameraUsageDescription</key>
+	<string>ขอสิทธิ์ใช้งานกล้องถ่ายรูปเพื่อแนบรูปภาพอุปกรณ์ที่ชำรุดหรือรูปโปรไฟล์</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>ขอสิทธิ์เข้าถึงคลังภาพเพื่อเลือกรูปภาพอุปกรณ์ที่ชำรุดหรือรูปโปรไฟล์</string>
 </dict>
 </plist>

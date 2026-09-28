@@ -1,4 +1,8 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
+import 'services/storage_service.dart';
+import 'tracking.dart';
 
 class RepairScreen extends StatefulWidget {
   const RepairScreen({super.key});
@@ -17,8 +21,8 @@ class _RepairScreenState extends State<RepairScreen> {
     'อาคารวิศวกรรมศาสตร์',
     'อาคารวิทยาศาสตร์',
     'อาคารเทคโนโลยีสารสนเทศ',
-    'หอพักนักศึกษาชาย',
-    'หอพักนักศึกษาหญิง',
+    'หอพักนักศึกษาชาย 2',
+    'หอพักนักศึกษาหญิง 1',
     'อาคารสำนักงานอธิการบดี',
     'หอประชุมใหญ่',
   ];
@@ -41,8 +45,10 @@ class _RepairScreenState extends State<RepairScreen> {
   // Urgency
   String _urgency = 'ปกติ'; // 'ปกติ' or 'ด่วน'
 
-  // Image attach state
-  bool _hasImageAttached = false;
+  // Image Picker List
+  final ImagePicker _picker = ImagePicker();
+  final List<XFile> _attachedImages = [];
+  bool _isSubmitting = false;
 
   @override
   void dispose() {
@@ -51,8 +57,128 @@ class _RepairScreenState extends State<RepairScreen> {
     super.dispose();
   }
 
-  void _onSubmit() {
+  Future<void> _pickImage(ImageSource source) async {
+    try {
+      if (source == ImageSource.camera) {
+        final XFile? photo = await _picker.pickImage(
+          source: ImageSource.camera,
+          maxWidth: 1200,
+          maxHeight: 1200,
+          imageQuality: 80,
+        );
+        if (photo != null) {
+          setState(() {
+            _attachedImages.add(photo);
+          });
+        }
+      } else {
+        final List<XFile> images = await _picker.pickMultiImage(
+          maxWidth: 1200,
+          maxHeight: 1200,
+          imageQuality: 80,
+        );
+        if (images.isNotEmpty) {
+          setState(() {
+            _attachedImages.addAll(images);
+          });
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('ไม่สามารถเข้าถึงกล้องหรือคลังภาพได้ กรุณาตรวจสอบสิทธิ์การใช้งานในเครื่อง'),
+            backgroundColor: Colors.redAccent,
+          ),
+        );
+      }
+    }
+  }
+
+  void _showImageSourcePicker() {
+    showModalBottomSheet(
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (context) => Container(
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Text(
+              'แนบรูปภาพอุปกรณ์ที่ชำรุด',
+              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Color(0xFF1E293B)),
+            ),
+            const SizedBox(height: 16),
+            ListTile(
+              leading: const Icon(Icons.camera_alt_rounded, color: Color(0xFF015ED3)),
+              title: const Text('ถ่ายรูปด้วยกล้อง (Camera)'),
+              onTap: () {
+                Navigator.pop(context);
+                _pickImage(ImageSource.camera);
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.photo_library_rounded, color: Color(0xFF015ED3)),
+              title: const Text('เลือกจากคลังภาพ (Gallery)'),
+              onTap: () {
+                Navigator.pop(context);
+                _pickImage(ImageSource.gallery);
+              },
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _removeImage(int index) {
+    setState(() {
+      _attachedImages.removeAt(index);
+    });
+  }
+
+  Future<void> _onSubmit() async {
     if (_formKey.currentState?.validate() ?? false) {
+      setState(() {
+        _isSubmitting = true;
+      });
+
+      // Generate Ticket ID & Date
+      final now = DateTime.now();
+      final year = now.year;
+      final month = now.month.toString().padLeft(2, '0');
+      final day = now.day.toString().padLeft(2, '0');
+      final hour = now.hour.toString().padLeft(2, '0');
+      final minute = now.minute.toString().padLeft(2, '0');
+      final randomNum = (now.millisecondsSinceEpoch % 9000) + 1000;
+
+      final ticketId = 'FIX-$year-$randomNum';
+      final reportDate = '$day/$month/$year | $hour:$minute น.';
+
+      final newTicket = {
+        'id': ticketId,
+        'location': '${_selectedLocation ?? "อาคารเรียนรวม"} - ${_roomController.text.trim()}',
+        'category': _selectedCategory ?? 'เครื่องปรับอากาศ',
+        'description': _descriptionController.text.trim(),
+        'reportDate': reportDate,
+        'urgency': _urgency,
+        'status': 'รอดำเนินการ',
+        'imagePaths': _attachedImages.map((e) => e.path).toList(),
+        'technicianName': 'ช่างประจำศูนย์ FixU Center',
+        'technicianPhone': '02-123-4567',
+      };
+
+      // Save to SharedPreferences Local Storage
+      await StorageService.addTicket(newTicket);
+
+      setState(() {
+        _isSubmitting = false;
+      });
+
+      if (!mounted) return;
+
       showDialog(
         context: context,
         barrierDismissible: false,
@@ -76,7 +202,7 @@ class _RepairScreenState extends State<RepairScreen> {
               ),
               const SizedBox(height: 18),
               const Text(
-                'ส่งคำขอสำเร็จ!',
+                'ส่งแจ้งซ่อมสำเร็จ!',
                 style: TextStyle(
                   fontSize: 20,
                   fontWeight: FontWeight.bold,
@@ -85,7 +211,7 @@ class _RepairScreenState extends State<RepairScreen> {
               ),
               const SizedBox(height: 8),
               Text(
-                'ระบบได้รับข้อมูลการแจ้งซ่อมเรียบร้อยแล้ว\nความเร่งด่วน: $_urgency',
+                'หมายเลขคำขอ: $ticketId\nระบบได้รับข้อมูลและส่งไปจัดสรรช่างเรียบร้อยแล้ว',
                 textAlign: TextAlign.center,
                 style: const TextStyle(
                   fontSize: 14,
@@ -108,10 +234,13 @@ class _RepairScreenState extends State<RepairScreen> {
                   ),
                   onPressed: () {
                     Navigator.pop(context); // Close dialog
-                    Navigator.pop(context); // Back to previous screen
+                    Navigator.pushReplacement(
+                      context,
+                      MaterialPageRoute(builder: (_) => const TrackingScreen()),
+                    );
                   },
                   child: const Text(
-                    'ตกลง',
+                    'ดูสถานะการแจ้งซ่อม',
                     style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                   ),
                 ),
@@ -151,7 +280,7 @@ class _RepairScreenState extends State<RepairScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // 1. Photo Attach Area
+              // 1. Real Photo Attach Area
               const Text(
                 'รูปภาพอุปกรณ์ที่ชำรุด',
                 style: TextStyle(
@@ -161,55 +290,111 @@ class _RepairScreenState extends State<RepairScreen> {
                 ),
               ),
               const SizedBox(height: 10),
-              GestureDetector(
-                onTap: () {
-                  setState(() {
-                    _hasImageAttached = !_hasImageAttached;
-                  });
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text(_hasImageAttached ? 'แนบรูปภาพเรียบร้อยแล้ว' : 'ยกเลิกการแนบรูปภาพ'),
-                      duration: const Duration(seconds: 1),
+
+              if (_attachedImages.isEmpty)
+                GestureDetector(
+                  onTap: _showImageSourcePicker,
+                  child: Container(
+                    width: double.infinity,
+                    height: 130,
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(20),
+                      border: Border.all(color: const Color(0xFFCBD5E1), width: 1.2),
                     ),
-                  );
-                },
-                child: Container(
-                  width: double.infinity,
-                  height: 140,
-                  decoration: BoxDecoration(
-                    color: _hasImageAttached ? const Color(0xFFEBF4FE) : Colors.white,
-                    borderRadius: BorderRadius.circular(20),
-                    border: Border.all(
-                      color: _hasImageAttached ? const Color(0xFF015ED3) : const Color(0xFFCBD5E1),
-                      width: _hasImageAttached ? 2 : 1.2,
-                    ),
-                  ),
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(
-                        _hasImageAttached ? Icons.check_circle_rounded : Icons.camera_alt_rounded,
-                        size: 40,
-                        color: const Color(0xFF015ED3),
-                      ),
-                      const SizedBox(height: 8),
-                      Text(
-                        _hasImageAttached ? 'แนบรูปภาพอุปกรณ์แล้ว (แตะเพื่อเปลี่ยน)' : 'แตะเพื่อแนบรูปภาพหรือถ่ายรูปอุปกรณ์',
-                        style: const TextStyle(
-                          fontSize: 13,
-                          fontWeight: FontWeight.bold,
-                          color: Color(0xFF334155),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: const [
+                        Icon(Icons.camera_alt_rounded, size: 40, color: Color(0xFF015ED3)),
+                        SizedBox(height: 8),
+                        Text(
+                          'แตะเพื่อเพิ่มรูปภาพ (กล้องหรือคลังภาพ)',
+                          style: TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.bold,
+                            color: Color(0xFF334155),
+                          ),
                         ),
-                      ),
-                      const SizedBox(height: 4),
-                      const Text(
-                        'รองรับไฟล์ JPG, PNG (ไม่เกิน 10MB)',
-                        style: TextStyle(fontSize: 11, color: Color(0xFF94A3B8)),
-                      ),
-                    ],
+                        SizedBox(height: 4),
+                        Text(
+                          'แนบได้หลายรูปถ่ายจากอุปกรณ์จริง',
+                          style: TextStyle(fontSize: 11, color: Color(0xFF94A3B8)),
+                        ),
+                      ],
+                    ),
                   ),
+                )
+              else
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    SizedBox(
+                      height: 110,
+                      child: ListView.builder(
+                        scrollDirection: Axis.horizontal,
+                        itemCount: _attachedImages.length + 1,
+                        itemBuilder: (context, index) {
+                          if (index == _attachedImages.length) {
+                            return GestureDetector(
+                              onTap: _showImageSourcePicker,
+                              child: Container(
+                                width: 100,
+                                height: 100,
+                                margin: const EdgeInsets.only(right: 10),
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFFEBF4FE),
+                                  borderRadius: BorderRadius.circular(16),
+                                  border: Border.all(color: const Color(0xFF015ED3), width: 1.2),
+                                ),
+                                child: Column(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: const [
+                                    Icon(Icons.add_a_photo_rounded, color: Color(0xFF015ED3), size: 28),
+                                    SizedBox(height: 4),
+                                    Text('เพิ่มรูปภาพ', style: TextStyle(fontSize: 11, color: Color(0xFF015ED3), fontWeight: FontWeight.bold)),
+                                  ],
+                                ),
+                              ),
+                            );
+                          }
+
+                          final xFile = _attachedImages[index];
+                          return Stack(
+                            children: [
+                              Container(
+                                width: 100,
+                                height: 100,
+                                margin: const EdgeInsets.only(right: 10),
+                                decoration: BoxDecoration(
+                                  borderRadius: BorderRadius.circular(16),
+                                  image: DecorationImage(
+                                    image: FileImage(File(xFile.path)),
+                                    fit: BoxFit.cover,
+                                  ),
+                                ),
+                              ),
+                              Positioned(
+                                top: 4,
+                                right: 14,
+                                child: GestureDetector(
+                                  onTap: () => _removeImage(index),
+                                  child: Container(
+                                    padding: const EdgeInsets.all(4),
+                                    decoration: const BoxDecoration(
+                                      color: Colors.redAccent,
+                                      shape: BoxShape.circle,
+                                    ),
+                                    child: const Icon(Icons.close_rounded, color: Colors.white, size: 14),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          );
+                        },
+                      ),
+                    ),
+                  ],
                 ),
-              ),
               const SizedBox(height: 22),
 
               // 2. Location & Room Section
@@ -234,7 +419,7 @@ class _RepairScreenState extends State<RepairScreen> {
                         Icon(Icons.location_on_rounded, color: Color(0xFF015ED3), size: 22),
                         SizedBox(width: 8),
                         Text(
-                          'เลือกสถานที่เกิดปัญหา',
+                          'สถานที่เกิดปัญหา',
                           style: TextStyle(
                             fontSize: 15,
                             fontWeight: FontWeight.bold,
@@ -436,7 +621,7 @@ class _RepairScreenState extends State<RepairScreen> {
                 width: double.infinity,
                 height: 52,
                 child: ElevatedButton(
-                  onPressed: _onSubmit,
+                  onPressed: _isSubmitting ? null : _onSubmit,
                   style: ElevatedButton.styleFrom(
                     backgroundColor: const Color(0xFF015ED3),
                     foregroundColor: Colors.white,
@@ -445,10 +630,16 @@ class _RepairScreenState extends State<RepairScreen> {
                       borderRadius: BorderRadius.circular(16),
                     ),
                   ),
-                  child: const Text(
-                    'ส่งแจ้งซ่อม',
-                    style: TextStyle(fontSize: 17, fontWeight: FontWeight.bold),
-                  ),
+                  child: _isSubmitting
+                      ? const SizedBox(
+                          width: 22,
+                          height: 22,
+                          child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
+                        )
+                      : const Text(
+                          'ส่งแจ้งซ่อม',
+                          style: TextStyle(fontSize: 17, fontWeight: FontWeight.bold),
+                        ),
                 ),
               ),
               const SizedBox(height: 20),

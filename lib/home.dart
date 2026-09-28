@@ -1,8 +1,11 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
+import 'services/storage_service.dart';
 import 'login.dart';
 import 'repair.dart';
 import 'tracking.dart';
 import 'history.dart';
+import 'profile.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -13,32 +16,61 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   int _currentNavIndex = 0;
+  String _userName = 'คุณสมชาย ใจดี';
+  String _userStudentId = '650123456';
+  String _userProfileImagePath = '';
 
-  void _onMenuTap(int index) {
+  @override
+  void initState() {
+    super.initState();
+    _loadUserProfile();
+  }
+
+  Future<void> _loadUserProfile() async {
+    final profile = await StorageService.getProfile();
+    setState(() {
+      _userName = profile['name'] ?? 'คุณสมชาย ใจดี';
+      _userStudentId = profile['studentId'] ?? '650123456';
+      _userProfileImagePath = profile['profileImagePath'] ?? '';
+    });
+  }
+
+  void _onMenuTap(int index) async {
     switch (index) {
       case 0: // แจ้งซ่อม
-        Navigator.push(
+        await Navigator.push(
           context,
           MaterialPageRoute(builder: (context) => const RepairScreen()),
         );
+        if (!mounted) return;
+        _loadUserProfile();
         break;
       case 1: // ติดตามสถานะ
-        Navigator.push(
+        await Navigator.push(
           context,
           MaterialPageRoute(builder: (context) => const TrackingScreen()),
         );
+        if (!mounted) return;
+        _loadUserProfile();
         break;
       case 2: // ประวัติการแจ้ง
-        Navigator.push(
+        await Navigator.push(
           context,
           MaterialPageRoute(builder: (context) => const HistoryScreen()),
         );
+        if (!mounted) return;
+        _loadUserProfile();
         break;
       case 3: // ข่าวสาร
         _showNewsDialog();
         break;
-      case 4: // ข้อมูลส่วนตัว
-        _showProfileDialog();
+      case 4: // ข้อมูลส่วนตัว / โปรไฟล์
+        await Navigator.push(
+          context,
+          MaterialPageRoute(builder: (context) => const ProfileScreen()),
+        );
+        if (!mounted) return;
+        _loadUserProfile();
         break;
       case 5: // ตั้งค่า
         _showSettingsDialog();
@@ -110,41 +142,6 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  void _showProfileDialog() {
-    showDialog(
-      context: context,
-      builder: (context) => const AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.all(Radius.circular(20))),
-        title: Row(
-          children: [
-            CircleAvatar(
-              backgroundColor: Color(0xFFE0EDFF),
-              child: Icon(Icons.person, color: Color(0xFF015ED3)),
-            ),
-            SizedBox(width: 12),
-            Text('ข้อมูลส่วนตัว', style: TextStyle(fontWeight: FontWeight.bold)),
-          ],
-        ),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text('ชื่อ-นามสกุล: นายสมชาย ใจดี', style: TextStyle(fontSize: 15, fontWeight: FontWeight.w500)),
-            SizedBox(height: 6),
-            Text('รหัสนักศึกษา: 650123456', style: TextStyle(fontSize: 14, color: Color(0xFF64748B))),
-            SizedBox(height: 6),
-            Text('คณะ: วิศวกรรมศาสตร์', style: TextStyle(fontSize: 14, color: Color(0xFF64748B))),
-            SizedBox(height: 6),
-            Text('อีเมล: somchai.j@university.ac.th', style: TextStyle(fontSize: 14, color: Color(0xFF64748B))),
-          ],
-        ),
-        actions: [
-          _CloseButton(),
-        ],
-      ),
-    );
-  }
-
   void _showSettingsDialog() {
     showDialog(
       context: context,
@@ -195,7 +192,7 @@ class _HomeScreenState extends State<HomeScreen> {
       body: SingleChildScrollView(
         child: Column(
           children: [
-            // 1. Curved Blue Header Header Section
+            // 1. Curved Blue Header Section
             _buildHeader(context),
 
             const SizedBox(height: 20),
@@ -388,18 +385,22 @@ class _HomeScreenState extends State<HomeScreen> {
         ),
         child: BottomNavigationBar(
           currentIndex: _currentNavIndex,
-          onTap: (index) {
+          onTap: (index) async {
             setState(() {
               _currentNavIndex = index;
             });
             if (index == 1) {
-              Navigator.push(context, MaterialPageRoute(builder: (_) => const RepairScreen()));
+              await Navigator.push(context, MaterialPageRoute(builder: (_) => const RepairScreen()));
+              if (!mounted) return;
+              _loadUserProfile();
             } else if (index == 2) {
-              Navigator.push(context, MaterialPageRoute(builder: (_) => const TrackingScreen()));
+              await Navigator.push(context, MaterialPageRoute(builder: (_) => const HistoryScreen()));
+              if (!mounted) return;
+              _loadUserProfile();
             } else if (index == 3) {
-              Navigator.push(context, MaterialPageRoute(builder: (_) => const HistoryScreen()));
-            } else if (index == 4) {
-              _showSettingsDialog();
+              await Navigator.push(context, MaterialPageRoute(builder: (_) => const ProfileScreen()));
+              if (!mounted) return;
+              _loadUserProfile();
             }
           },
           type: BottomNavigationBarType.fixed,
@@ -410,26 +411,10 @@ class _HomeScreenState extends State<HomeScreen> {
           unselectedLabelStyle: const TextStyle(fontSize: 12),
           elevation: 0,
           items: const [
-            BottomNavigationBarItem(
-              icon: Icon(Icons.home_rounded),
-              label: 'หน้าแรก',
-            ),
-            BottomNavigationBarItem(
-              icon: Icon(Icons.build_outlined),
-              label: 'แจ้งซ่อม',
-            ),
-            BottomNavigationBarItem(
-              icon: Icon(Icons.find_in_page_outlined),
-              label: 'ติดตาม',
-            ),
-            BottomNavigationBarItem(
-              icon: Icon(Icons.history_rounded),
-              label: 'ประวัติ',
-            ),
-            BottomNavigationBarItem(
-              icon: Icon(Icons.settings_outlined),
-              label: 'ตั้งค่า',
-            ),
+            BottomNavigationBarItem(icon: Icon(Icons.home_rounded), label: 'หน้าแรก'),
+            BottomNavigationBarItem(icon: Icon(Icons.build_outlined), label: 'แจ้งซ่อม'),
+            BottomNavigationBarItem(icon: Icon(Icons.history_rounded), label: 'ประวัติ'),
+            BottomNavigationBarItem(icon: Icon(Icons.person_outlined), label: 'โปรไฟล์'),
           ],
         ),
       ),
@@ -455,42 +440,47 @@ class _HomeScreenState extends State<HomeScreen> {
         children: [
           Row(
             children: [
-              // User Avatar
+              // User Avatar (Custom Profile Picture if selected)
               Container(
                 padding: const EdgeInsets.all(3),
                 decoration: const BoxDecoration(
                   color: Colors.white24,
                   shape: BoxShape.circle,
                 ),
-                child: const CircleAvatar(
+                child: CircleAvatar(
                   radius: 24,
                   backgroundColor: Colors.white,
-                  child: Icon(Icons.person, color: Color(0xFF015ED3), size: 28),
+                  backgroundImage: _userProfileImagePath.isNotEmpty
+                      ? FileImage(File(_userProfileImagePath)) as ImageProvider
+                      : null,
+                  child: _userProfileImagePath.isEmpty
+                      ? const Icon(Icons.person, color: Color(0xFF015ED3), size: 28)
+                      : null,
                 ),
               ),
               const SizedBox(width: 14),
               // User Name & Info
-              const Expanded(
+              Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
+                    const Text(
                       'สวัสดี 👋',
                       style: TextStyle(color: Colors.white70, fontSize: 13),
                     ),
-                    SizedBox(height: 2),
+                    const SizedBox(height: 2),
                     Text(
-                      'คุณสมชาย ใจดี',
-                      style: TextStyle(
+                      _userName,
+                      style: const TextStyle(
                         color: Colors.white,
                         fontSize: 19,
                         fontWeight: FontWeight.bold,
                       ),
                     ),
-                    SizedBox(height: 2),
+                    const SizedBox(height: 2),
                     Text(
-                      'รหัสนักศึกษา: 650123456',
-                      style: TextStyle(color: Colors.white70, fontSize: 12),
+                      'รหัสนักศึกษา: $_userStudentId',
+                      style: const TextStyle(color: Colors.white70, fontSize: 12),
                     ),
                   ],
                 ),
@@ -625,18 +615,6 @@ class _HomeScreenState extends State<HomeScreen> {
           Text(desc, style: const TextStyle(fontSize: 13, color: Color(0xFF475569), height: 1.3)),
         ],
       ),
-    );
-  }
-}
-
-class _CloseButton extends StatelessWidget {
-  const _CloseButton();
-
-  @override
-  Widget build(BuildContext context) {
-    return TextButton(
-      onPressed: () => Navigator.pop(context),
-      child: const Text('ปิด', style: TextStyle(fontWeight: FontWeight.bold)),
     );
   }
 }
