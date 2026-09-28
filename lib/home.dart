@@ -72,8 +72,8 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
             ),
             const SizedBox(height: 16),
-            Row(
-              children: const [
+            const Row(
+              children: [
                 Icon(Icons.campaign_rounded, color: Color(0xFF015ED3), size: 28),
                 SizedBox(width: 10),
                 Text(
@@ -113,10 +113,10 @@ class _HomeScreenState extends State<HomeScreen> {
   void _showProfileDialog() {
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+      builder: (context) => const AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.all(Radius.circular(20))),
         title: Row(
-          children: const [
+          children: [
             CircleAvatar(
               backgroundColor: Color(0xFFE0EDFF),
               child: Icon(Icons.person, color: Color(0xFF015ED3)),
@@ -128,7 +128,7 @@ class _HomeScreenState extends State<HomeScreen> {
         content: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
-          children: const [
+          children: [
             Text('ชื่อ-นามสกุล: นายสมชาย ใจดี', style: TextStyle(fontSize: 15, fontWeight: FontWeight.w500)),
             SizedBox(height: 6),
             Text('รหัสนักศึกษา: 650123456', style: TextStyle(fontSize: 14, color: Color(0xFF64748B))),
@@ -139,10 +139,7 @@ class _HomeScreenState extends State<HomeScreen> {
           ],
         ),
         actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('ปิด', style: TextStyle(fontWeight: FontWeight.bold)),
-          ),
+          _CloseButton(),
         ],
       ),
     );
@@ -153,8 +150,8 @@ class _HomeScreenState extends State<HomeScreen> {
       context: context,
       builder: (context) => AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: Row(
-          children: const [
+        title: const Row(
+          children: [
             Icon(Icons.settings_rounded, color: Color(0xFF015ED3)),
             SizedBox(width: 10),
             Text('ตั้งค่าระบบ', style: TextStyle(fontWeight: FontWeight.bold)),
@@ -350,8 +347,8 @@ class _HomeScreenState extends State<HomeScreen> {
                         const SizedBox(height: 12),
                         GestureDetector(
                           onTap: _showNewsDialog,
-                          child: Row(
-                            children: const [
+                          child: const Row(
+                            children: [
                               Text(
                                 'อ่านรายละเอียดเพิ่มเติม',
                                 style: TextStyle(
@@ -473,10 +470,10 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
               const SizedBox(width: 14),
               // User Name & Info
-              Expanded(
+              const Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
-                  children: const [
+                  children: [
                     Text(
                       'สวัสดี 👋',
                       style: TextStyle(color: Colors.white70, fontSize: 13),
@@ -628,6 +625,18 @@ class _HomeScreenState extends State<HomeScreen> {
           Text(desc, style: const TextStyle(fontSize: 13, color: Color(0xFF475569), height: 1.3)),
         ],
       ),
+    );
+  }
+}
+
+class _CloseButton extends StatelessWidget {
+  const _CloseButton();
+
+  @override
+  Widget build(BuildContext context) {
+    return TextButton(
+      onPressed: () => Navigator.pop(context),
+      child: const Text('ปิด', style: TextStyle(fontWeight: FontWeight.bold)),
     );
   }
 }

@@ -9,61 +9,115 @@ class RepairScreen extends StatefulWidget {
 
 class _RepairScreenState extends State<RepairScreen> {
   final _formKey = GlobalKey<FormState>();
-  
-  String? _selectedCategory = 'เครื่องปรับอากาศ';
-  final TextEditingController _buildingController = TextEditingController();
-  final TextEditingController _roomController = TextEditingController();
-  final TextEditingController _descriptionController = TextEditingController();
-  final TextEditingController _phoneController = TextEditingController();
 
-  final List<Map<String, dynamic>> _categories = [
-    {'name': 'เครื่องปรับอากาศ', 'icon': Icons.ac_unit_rounded, 'color': const Color(0xFF0066FF)},
-    {'name': 'ระบบไฟฟ้า/หลอดไฟ', 'icon': Icons.lightbulb_outline_rounded, 'color': const Color(0xFFF59E0B)},
-    {'name': 'ระบบประปา/ห้องน้ำ', 'icon': Icons.water_drop_outlined, 'color': const Color(0xFF06B6D4)},
-    {'name': 'ครุภัณฑ์/เฟอร์นิเจอร์', 'icon': Icons.chair_outlined, 'color': const Color(0xFF8B5CF6)},
-    {'name': 'อุปกรณ์คอมพิวเตอร์', 'icon': Icons.computer_rounded, 'color': const Color(0xFF10B981)},
-    {'name': 'อื่นๆ', 'icon': Icons.build_circle_outlined, 'color': const Color(0xFF64748B)},
+  // Location Dropdown & Room
+  String? _selectedLocation = 'อาคารเรียนรวม (LHC)';
+  final List<String> _locations = [
+    'อาคารเรียนรวม (LHC)',
+    'อาคารวิศวกรรมศาสตร์',
+    'อาคารวิทยาศาสตร์',
+    'อาคารเทคโนโลยีสารสนเทศ',
+    'หอพักนักศึกษาชาย',
+    'หอพักนักศึกษาหญิง',
+    'อาคารสำนักงานอธิการบดี',
+    'หอประชุมใหญ่',
   ];
+  final TextEditingController _roomController = TextEditingController(text: 'ห้อง 305');
+
+  // Category Dropdown
+  String? _selectedCategory = 'เครื่องปรับอากาศ';
+  final List<Map<String, dynamic>> _categories = [
+    {'name': 'เครื่องปรับอากาศ', 'icon': Icons.ac_unit_rounded},
+    {'name': 'ระบบไฟฟ้า / หลอดไฟ', 'icon': Icons.lightbulb_outline_rounded},
+    {'name': 'ระบบประปา / ห้องน้ำ', 'icon': Icons.water_drop_outlined},
+    {'name': 'ครุภัณฑ์ / โต๊ะเก้าอี้', 'icon': Icons.chair_outlined},
+    {'name': 'อุปกรณ์คอมพิวเตอร์ / ไอที', 'icon': Icons.computer_rounded},
+    {'name': 'อุปกรณ์อื่น ๆ', 'icon': Icons.build_circle_outlined},
+  ];
+
+  // Description
+  final TextEditingController _descriptionController = TextEditingController();
+
+  // Urgency
+  String _urgency = 'ปกติ'; // 'ปกติ' or 'ด่วน'
+
+  // Image attach state
+  bool _hasImageAttached = false;
 
   @override
   void dispose() {
-    _buildingController.dispose();
     _roomController.dispose();
     _descriptionController.dispose();
-    _phoneController.dispose();
     super.dispose();
   }
 
-  void _submitForm() {
+  void _onSubmit() {
     if (_formKey.currentState?.validate() ?? false) {
       showDialog(
         context: context,
+        barrierDismissible: false,
         builder: (context) => AlertDialog(
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-          title: Row(
-            children: const [
-              Icon(Icons.check_circle_rounded, color: Color(0xFF10B981), size: 28),
-              SizedBox(width: 10),
-              Text('ส่งข้อมูลสำเร็จ', style: TextStyle(fontWeight: FontWeight.bold)),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+          contentPadding: const EdgeInsets.all(24),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                padding: const EdgeInsets.all(16),
+                decoration: const BoxDecoration(
+                  color: Color(0xFFDCFCE7),
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(
+                  Icons.check_circle_rounded,
+                  color: Color(0xFF16A34A),
+                  size: 48,
+                ),
+              ),
+              const SizedBox(height: 18),
+              const Text(
+                'ส่งคำขอสำเร็จ!',
+                style: TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                  color: Color(0xFF1E293B),
+                ),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                'ระบบได้รับข้อมูลการแจ้งซ่อมเรียบร้อยแล้ว\nความเร่งด่วน: $_urgency',
+                textAlign: TextAlign.center,
+                style: const TextStyle(
+                  fontSize: 14,
+                  color: Color(0xFF64748B),
+                  height: 1.4,
+                ),
+              ),
+              const SizedBox(height: 24),
+              SizedBox(
+                width: double.infinity,
+                height: 48,
+                child: ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF015ED3),
+                    foregroundColor: Colors.white,
+                    elevation: 0,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(14),
+                    ),
+                  ),
+                  onPressed: () {
+                    Navigator.pop(context); // Close dialog
+                    Navigator.pop(context); // Back to previous screen
+                  },
+                  child: const Text(
+                    'ตกลง',
+                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                  ),
+                ),
+              ),
             ],
           ),
-          content: const Text(
-            'ระบบได้รับข้อมูลการแจ้งซ่อมของท่านเรียบร้อยแล้ว เจ้าหน้าที่จะดำเนินการตรวจสอบโดยเร็วที่สุด',
-            style: TextStyle(fontSize: 15, color: Color(0xFF475569)),
-          ),
-          actions: [
-            ElevatedButton(
-              style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF0066FF),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-              ),
-              onPressed: () {
-                Navigator.pop(context); // Close dialog
-                Navigator.pop(context); // Back to Home
-              },
-              child: const Text('ตกลง', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
-            ),
-          ],
         ),
       );
     }
@@ -76,7 +130,11 @@ class _RepairScreenState extends State<RepairScreen> {
       appBar: AppBar(
         title: const Text(
           'แจ้งซ่อม',
-          style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white, fontSize: 18),
+          style: TextStyle(
+            fontWeight: FontWeight.bold,
+            color: Colors.white,
+            fontSize: 18,
+          ),
         ),
         backgroundColor: const Color(0xFF015ED3),
         elevation: 0,
@@ -93,64 +151,70 @@ class _RepairScreenState extends State<RepairScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // 1. Select Category Section
+              // 1. Photo Attach Area
               const Text(
-                'หมวดหมู่การแจ้งซ่อม',
+                'รูปภาพอุปกรณ์ที่ชำรุด',
                 style: TextStyle(
-                  fontSize: 16,
+                  fontSize: 15,
                   fontWeight: FontWeight.bold,
                   color: Color(0xFF1E293B),
                 ),
               ),
-              const SizedBox(height: 12),
-              Wrap(
-                spacing: 10,
-                runSpacing: 10,
-                children: _categories.map((cat) {
-                  final isSelected = _selectedCategory == cat['name'];
-                  return ChoiceChip(
-                    label: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(
-                          cat['icon'] as IconData,
-                          size: 18,
-                          color: isSelected ? Colors.white : (cat['color'] as Color),
-                        ),
-                        const SizedBox(width: 6),
-                        Text(
-                          cat['name'] as String,
-                          style: TextStyle(
-                            color: isSelected ? Colors.white : const Color(0xFF334155),
-                            fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-                            fontSize: 13,
-                          ),
-                        ),
-                      ],
+              const SizedBox(height: 10),
+              GestureDetector(
+                onTap: () {
+                  setState(() {
+                    _hasImageAttached = !_hasImageAttached;
+                  });
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text(_hasImageAttached ? 'แนบรูปภาพเรียบร้อยแล้ว' : 'ยกเลิกการแนบรูปภาพ'),
+                      duration: const Duration(seconds: 1),
                     ),
-                    selected: isSelected,
-                    selectedColor: const Color(0xFF0066FF),
-                    backgroundColor: Colors.white,
-                    side: BorderSide(
-                      color: isSelected ? const Color(0xFF0066FF) : const Color(0xFFE2E8F0),
-                      width: 1.2,
-                    ),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                    onSelected: (selected) {
-                      if (selected) {
-                        setState(() {
-                          _selectedCategory = cat['name'] as String;
-                        });
-                      }
-                    },
                   );
-                }).toList(),
+                },
+                child: Container(
+                  width: double.infinity,
+                  height: 140,
+                  decoration: BoxDecoration(
+                    color: _hasImageAttached ? const Color(0xFFEBF4FE) : Colors.white,
+                    borderRadius: BorderRadius.circular(20),
+                    border: Border.all(
+                      color: _hasImageAttached ? const Color(0xFF015ED3) : const Color(0xFFCBD5E1),
+                      width: _hasImageAttached ? 2 : 1.2,
+                    ),
+                  ),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(
+                        _hasImageAttached ? Icons.check_circle_rounded : Icons.camera_alt_rounded,
+                        size: 40,
+                        color: const Color(0xFF015ED3),
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        _hasImageAttached ? 'แนบรูปภาพอุปกรณ์แล้ว (แตะเพื่อเปลี่ยน)' : 'แตะเพื่อแนบรูปภาพหรือถ่ายรูปอุปกรณ์',
+                        style: const TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.bold,
+                          color: Color(0xFF334155),
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      const Text(
+                        'รองรับไฟล์ JPG, PNG (ไม่เกิน 10MB)',
+                        style: TextStyle(fontSize: 11, color: Color(0xFF94A3B8)),
+                      ),
+                    ],
+                  ),
+                ),
               ),
-              const SizedBox(height: 24),
+              const SizedBox(height: 22),
 
-              // 2. Location Information Card
+              // 2. Location & Room Section
               Container(
-                padding: const EdgeInsets.all(20),
+                padding: const EdgeInsets.all(18),
                 decoration: BoxDecoration(
                   color: Colors.white,
                   borderRadius: BorderRadius.circular(20),
@@ -167,50 +231,62 @@ class _RepairScreenState extends State<RepairScreen> {
                   children: [
                     Row(
                       children: const [
-                        Icon(Icons.location_on_rounded, color: Color(0xFF0066FF), size: 22),
+                        Icon(Icons.location_on_rounded, color: Color(0xFF015ED3), size: 22),
                         SizedBox(width: 8),
                         Text(
-                          'สถานที่เกิดปัญหา',
+                          'เลือกสถานที่เกิดปัญหา',
                           style: TextStyle(
-                            fontSize: 16,
+                            fontSize: 15,
                             fontWeight: FontWeight.bold,
                             color: Color(0xFF1E293B),
                           ),
                         ),
                       ],
                     ),
-                    const SizedBox(height: 16),
-                    TextFormField(
-                      controller: _buildingController,
-                      style: const TextStyle(fontSize: 14),
+                    const SizedBox(height: 14),
+
+                    // Location Dropdown
+                    DropdownButtonFormField<String>(
+                      value: _selectedLocation,
+                      icon: const Icon(Icons.keyboard_arrow_down_rounded, color: Color(0xFF64748B)),
+                      style: const TextStyle(fontSize: 14, color: Color(0xFF1E293B)),
                       decoration: _inputDecoration(
-                        hint: 'ระบุอาคาร / หอพัก (เช่น อาคารเรียนรวม 4)',
+                        hint: 'เลือกอาคาร / สถานที่',
                         icon: Icons.business_rounded,
                       ),
-                      validator: (value) => (value == null || value.trim().isEmpty)
-                          ? 'กรุณาระบุอาคารหรือสถานที่'
-                          : null,
+                      items: _locations.map((location) {
+                        return DropdownMenuItem<String>(
+                          value: location,
+                          child: Text(location),
+                        );
+                      }).toList(),
+                      onChanged: (value) {
+                        setState(() {
+                          _selectedLocation = value;
+                        });
+                      },
+                      validator: (value) => (value == null || value.isEmpty) ? 'กรุณาเลือกสถานที่' : null,
                     ),
                     const SizedBox(height: 12),
+
+                    // Room Input
                     TextFormField(
                       controller: _roomController,
-                      style: const TextStyle(fontSize: 14),
+                      style: const TextStyle(fontSize: 14, color: Color(0xFF1E293B)),
                       decoration: _inputDecoration(
-                        hint: 'ระบุห้อง / บริเวณ (เช่น ห้อง 402 ชั้น 4)',
+                        hint: 'ระบุห้อง / บริเวณ (เช่น ห้อง 305)',
                         icon: Icons.meeting_room_rounded,
                       ),
-                      validator: (value) => (value == null || value.trim().isEmpty)
-                          ? 'กรุณาระบุห้องหรือบริเวณ'
-                          : null,
+                      validator: (value) => (value == null || value.trim().isEmpty) ? 'กรุณาระบุห้องหรือบริเวณ' : null,
                     ),
                   ],
                 ),
               ),
               const SizedBox(height: 20),
 
-              // 3. Issue Detail Card
+              // 3. Category & Description Section
               Container(
-                padding: const EdgeInsets.all(20),
+                padding: const EdgeInsets.all(18),
                 decoration: BoxDecoration(
                   color: Colors.white,
                   borderRadius: BorderRadius.circular(20),
@@ -227,96 +303,195 @@ class _RepairScreenState extends State<RepairScreen> {
                   children: [
                     Row(
                       children: const [
-                        Icon(Icons.description_rounded, color: Color(0xFF0066FF), size: 22),
+                        Icon(Icons.build_circle_rounded, color: Color(0xFF015ED3), size: 22),
                         SizedBox(width: 8),
                         Text(
-                          'รายละเอียดปัญหา & ติดต่อ',
+                          'ประเภทปัญหา & รายละเอียด',
                           style: TextStyle(
-                            fontSize: 16,
+                            fontSize: 15,
                             fontWeight: FontWeight.bold,
                             color: Color(0xFF1E293B),
                           ),
                         ),
                       ],
                     ),
-                    const SizedBox(height: 16),
+                    const SizedBox(height: 14),
+
+                    // Category Dropdown
+                    DropdownButtonFormField<String>(
+                      value: _selectedCategory,
+                      icon: const Icon(Icons.keyboard_arrow_down_rounded, color: Color(0xFF64748B)),
+                      style: const TextStyle(fontSize: 14, color: Color(0xFF1E293B)),
+                      decoration: _inputDecoration(
+                        hint: 'เลือกประเภทปัญหา',
+                        icon: Icons.category_rounded,
+                      ),
+                      items: _categories.map((cat) {
+                        final String name = cat['name'] as String;
+                        return DropdownMenuItem<String>(
+                          value: name,
+                          child: Text(name),
+                        );
+                      }).toList(),
+                      onChanged: (value) {
+                        setState(() {
+                          _selectedCategory = value;
+                        });
+                      },
+                      validator: (value) => (value == null || value.isEmpty) ? 'กรุณาเลือกประเภทปัญหา' : null,
+                    ),
+                    const SizedBox(height: 12),
+
+                    // Description Text Area
                     TextFormField(
                       controller: _descriptionController,
                       maxLines: 4,
-                      style: const TextStyle(fontSize: 14),
+                      style: const TextStyle(fontSize: 14, color: Color(0xFF1E293B)),
                       decoration: _inputDecoration(
-                        hint: 'อธิบายรายละเอียดอาการชำรุดหรือปัญหาที่พบ...',
+                        hint: 'กรอกอธิบายอาการชำรุดหรือรายละเอียดเพิ่มเติม...',
                         icon: Icons.edit_note_rounded,
                       ),
-                      validator: (value) => (value == null || value.trim().isEmpty)
-                          ? 'กรุณาอธิบายรายละเอียดปัญหา'
-                          : null,
-                    ),
-                    const SizedBox(height: 12),
-                    TextFormField(
-                      controller: _phoneController,
-                      keyboardType: TextInputType.phone,
-                      style: const TextStyle(fontSize: 14),
-                      decoration: _inputDecoration(
-                        hint: 'เบอร์โทรศัพท์ติดต่อกลับ',
-                        icon: Icons.phone_rounded,
-                      ),
-                      validator: (value) => (value == null || value.trim().isEmpty)
-                          ? 'กรุณาระบุเบอร์โทรศัพท์'
-                          : null,
+                      validator: (value) {
+                        if (value == null || value.trim().isEmpty) {
+                          return 'กรุณากรอกรายละเอียดปัญหา';
+                        }
+                        return null;
+                      },
                     ),
                   ],
                 ),
               ),
               const SizedBox(height: 20),
 
-              // 4. Photo Upload Area
+              // 4. Urgency Level Selection
               Container(
-                width: double.infinity,
-                padding: const EdgeInsets.all(20),
+                padding: const EdgeInsets.all(18),
                 decoration: BoxDecoration(
                   color: Colors.white,
                   borderRadius: BorderRadius.circular(20),
-                  border: Border.all(color: const Color(0xFFCBD5E1), width: 1.2),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.03),
+                      blurRadius: 10,
+                      offset: const Offset(0, 4),
+                    ),
+                  ],
                 ),
                 child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Icon(Icons.add_a_photo_outlined, size: 36, color: Color(0xFF0066FF)),
-                    const SizedBox(height: 8),
-                    const Text(
-                      'แนบรูปภาพสิ่งชำรุด (ถ้ามี)',
-                      style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: Color(0xFF334155)),
+                    Row(
+                      children: const [
+                        Icon(Icons.speed_rounded, color: Color(0xFF015ED3), size: 22),
+                        SizedBox(width: 8),
+                        Text(
+                          'ระดับความเร่งด่วน',
+                          style: TextStyle(
+                            fontSize: 15,
+                            fontWeight: FontWeight.bold,
+                            color: Color(0xFF1E293B),
+                          ),
+                        ),
+                      ],
                     ),
-                    const SizedBox(height: 4),
-                    const Text(
-                      'รองรับไฟล์ JPG, PNG ไม่เกิน 5MB',
-                      style: TextStyle(fontSize: 12, color: Color(0xFF94A3B8)),
+                    const SizedBox(height: 14),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: _buildUrgencyOption(
+                            label: 'ปกติ',
+                            icon: Icons.schedule_rounded,
+                            activeColor: const Color(0xFF015ED3),
+                            isSelected: _urgency == 'ปกติ',
+                            onTap: () {
+                              setState(() {
+                                _urgency = 'ปกติ';
+                              });
+                            },
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: _buildUrgencyOption(
+                            label: 'ด่วน 🚨',
+                            icon: Icons.warning_amber_rounded,
+                            activeColor: Colors.redAccent,
+                            isSelected: _urgency == 'ด่วน',
+                            onTap: () {
+                              setState(() {
+                                _urgency = 'ด่วน';
+                              });
+                            },
+                          ),
+                        ),
+                      ],
                     ),
                   ],
                 ),
               ),
               const SizedBox(height: 28),
 
-              // Submit Button
+              // 5. Submit Button
               SizedBox(
                 width: double.infinity,
                 height: 52,
                 child: ElevatedButton(
-                  onPressed: _submitForm,
+                  onPressed: _onSubmit,
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF0066FF),
+                    backgroundColor: const Color(0xFF015ED3),
                     foregroundColor: Colors.white,
                     elevation: 0,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(16),
+                    ),
                   ),
                   child: const Text(
-                    'ส่งข้อมูลแจ้งซ่อม',
-                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                    'ส่งแจ้งซ่อม',
+                    style: TextStyle(fontSize: 17, fontWeight: FontWeight.bold),
                   ),
                 ),
               ),
+              const SizedBox(height: 20),
             ],
           ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildUrgencyOption({
+    required String label,
+    required IconData icon,
+    required Color activeColor,
+    required bool isSelected,
+    required VoidCallback onTap,
+  }) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 14),
+        decoration: BoxDecoration(
+          color: isSelected ? activeColor.withOpacity(0.12) : const Color(0xFFFAFAFC),
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(
+            color: isSelected ? activeColor : const Color(0xFFE2E8F0),
+            width: isSelected ? 1.8 : 1.2,
+          ),
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(icon, size: 20, color: isSelected ? activeColor : const Color(0xFF64748B)),
+            const SizedBox(width: 8),
+            Text(
+              label,
+              style: TextStyle(
+                fontSize: 15,
+                fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
+                color: isSelected ? activeColor : const Color(0xFF64748B),
+              ),
+            ),
+          ],
         ),
       ),
     );
@@ -336,7 +511,15 @@ class _RepairScreenState extends State<RepairScreen> {
       ),
       focusedBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(14),
-        borderSide: const BorderSide(color: Color(0xFF0066FF), width: 1.8),
+        borderSide: const BorderSide(color: Color(0xFF015ED3), width: 1.8),
+      ),
+      errorBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(14),
+        borderSide: const BorderSide(color: Colors.redAccent, width: 1.2),
+      ),
+      focusedErrorBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(14),
+        borderSide: const BorderSide(color: Colors.redAccent, width: 1.8),
       ),
     );
   }

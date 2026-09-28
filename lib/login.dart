@@ -423,11 +423,15 @@ class _FixULogoWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const SizedBox(
+    return SizedBox(
       width: 120,
       height: 140,
-      child: CustomPaint(
-        painter: _FixUPinPainter(),
+      child: Image.asset(
+        'assets/fixu_pin_logo.png',
+        fit: BoxFit.contain,
+        errorBuilder: (context, error, stackTrace) => const CustomPaint(
+          painter: _FixUPinPainter(),
+        ),
       ),
     );
   }
